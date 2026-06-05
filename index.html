@@ -448,6 +448,34 @@
       gap:16px;
     }
 
+    .span-full{grid-column:1/-1}
+    .sync-panel{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:14px;
+      align-items:start;
+    }
+    .sync-status{
+      display:grid;
+      gap:9px;
+      padding:13px;
+      border-radius:17px;
+      background:#f8fbff;
+      border:1px solid var(--line);
+      color:#334155;
+      font-size:.88rem;
+      line-height:1.35;
+    }
+    .status-line{display:flex; gap:8px; align-items:flex-start}
+    .status-dot{width:11px; height:11px; border-radius:99px; background:#94a3b8; flex:0 0 auto; margin-top:4px}
+    .status-dot.ok{background:var(--green)}
+    .status-dot.warn{background:var(--amber)}
+    .status-dot.bad{background:var(--red)}
+    .mini-text{font-size:.78rem; color:var(--muted); line-height:1.35}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.82rem}
+    .inline-check{display:flex; gap:9px; align-items:flex-start; color:var(--muted); font-weight:750; font-size:.86rem; line-height:1.35}
+    .inline-check input{width:auto; margin-top:2px; accent-color:var(--primary)}
+
     .toast{
       position:fixed;
       left:50%;
@@ -500,7 +528,7 @@
       .topbar{padding-top:7px}
       .search-wrap{min-height:54px; border-radius:19px; padding:0 12px}
       .search-wrap input{font-size:.92rem}
-      .form-grid, .settings-grid{grid-template-columns:1fr}
+      .form-grid, .settings-grid, .sync-panel{grid-template-columns:1fr}
       .field.span-2{grid-column:auto}
       .admin-row{grid-template-columns:1fr}
       .admin-row .actions{justify-content:flex-start}
@@ -526,12 +554,12 @@
       <nav class="nav">
         <button class="active" data-view="responsesView"><span class="icon">💬</span> Respuestas</button>
         <button data-view="adminView"><span class="icon">➕</span> Agregar / Editar</button>
-        <button data-view="settingsView"><span class="icon">🛡️</span> Seguridad / Backup</button>
+        <button data-view="settingsView"><span class="icon">🛡️</span> Nube / Seguridad / Backup</button>
       </nav>
 
       <div class="side-note">
         <strong>Seguro para HTML estático:</strong><br>
-        el token no va escrito en el archivo. Se crea y se guarda como huella segura en este dispositivo.
+        el token no va escrito en el archivo. GitHub se configura desde el dispositivo y puede sincronizar con CatalogosHN.
       </div>
     </aside>
 
@@ -646,6 +674,61 @@
 
       <section id="settingsView" class="view">
         <div class="settings-grid">
+          <div class="form-card span-full">
+            <h2>Sincronización con GitHub / CatalogosHN</h2>
+            <p>Esta parte es la que actualiza las respuestas en la nube. Primero presiona <strong>Cargar nube</strong>; después puedes guardar localmente y usar <strong>Subir cambios</strong>.</p>
+
+            <div class="sync-panel">
+              <div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="ghOwnerInput">Owner / cuenta GitHub</label>
+                    <input id="ghOwnerInput" placeholder="CatalogosHN" />
+                  </div>
+                  <div class="field">
+                    <label for="ghRepoInput">Repositorio</label>
+                    <input id="ghRepoInput" placeholder="xrspfast" />
+                  </div>
+                  <div class="field">
+                    <label for="ghBranchInput">Branch</label>
+                    <input id="ghBranchInput" placeholder="main" />
+                  </div>
+                  <div class="field">
+                    <label for="ghPathInput">Ruta JSON en el repo</label>
+                    <input id="ghPathInput" placeholder="data/respuestas_rapidas.json" />
+                  </div>
+                  <div class="field span-2">
+                    <label for="ghTokenInput">GitHub token privado</label>
+                    <input id="ghTokenInput" type="password" placeholder="Pega tu token fine-grained con permiso Contents Read/Write" autocomplete="off" />
+                    <div class="mini-text" id="ghTokenHint">El token no se escribe dentro del HTML. Solo queda en esta sesión o en este dispositivo si marcas confianza.</div>
+                  </div>
+                </div>
+
+                <label class="inline-check" style="margin-bottom:10px">
+                  <input id="ghTrustToken" type="checkbox" />
+                  <span>Guardar GitHub token solo en este dispositivo de confianza.</span>
+                </label>
+                <label class="inline-check" style="margin-bottom:12px">
+                  <input id="ghAutoSync" type="checkbox" />
+                  <span>Auto-subir después de guardar respuestas, solo después de haber cargado nube.</span>
+                </label>
+
+                <div class="card-actions">
+                  <button class="btn ghost" type="button" id="saveGhConfigBtn">💾 Guardar config</button>
+                  <button class="btn primary" type="button" id="loadCloudBtn">☁️ Cargar nube</button>
+                  <button class="btn green" type="button" id="uploadCloudBtn">⬆️ Subir cambios</button>
+                  <button class="btn red" type="button" id="forgetGhTokenBtn">🚫 Borrar token GitHub</button>
+                </div>
+              </div>
+
+              <div class="sync-status">
+                <div class="status-line"><span class="status-dot warn" id="cloudDot"></span><div><strong id="cloudStatusTitle">Nube no cargada</strong><br><span id="cloudStatusText">Configura el repo y presiona Cargar nube antes de editar en varios dispositivos.</span></div></div>
+                <div><strong>Destino:</strong><br><span class="mono" id="cloudTargetText">CatalogosHN/xrspfast · data/respuestas_rapidas.json</span></div>
+                <div><strong>Última acción:</strong><br><span id="cloudLastAction">Sin actividad todavía.</span></div>
+              </div>
+            </div>
+          </div>
+
           <div class="form-card">
             <h2>Exportar copia</h2>
             <p>Descarga tus respuestas en un archivo JSON para guardarlas o pasarlas a otro dispositivo.</p>
@@ -686,6 +769,17 @@
     const TOKEN_HASH_KEY = 'respuestas_rapidas_token_hash_v1';
     const TRUST_KEY = 'respuestas_rapidas_trusted_device_v1';
     const UNLOCK_SESSION = 'respuestas_rapidas_unlocked_session_v1';
+    const GITHUB_CONFIG_KEY = 'respuestas_rapidas_github_config_v1';
+    const GITHUB_TOKEN_KEY = 'respuestas_rapidas_github_token_v1';
+    const GITHUB_SESSION_TOKEN_KEY = 'respuestas_rapidas_github_session_token_v1';
+
+    const defaultGithubConfig = {
+      owner: 'CatalogosHN',
+      repo: 'xrspfast',
+      branch: 'main',
+      path: 'data/respuestas_rapidas.json',
+      autoSync: false
+    };
 
     const defaultResponses = [
       {
@@ -718,6 +812,10 @@
     let selectedResponse = null;
     let currentCategory = 'Todos';
     let isAdminUnlocked = sessionStorage.getItem(UNLOCK_SESSION) === 'true' || localStorage.getItem(TRUST_KEY) === 'true';
+    let githubConfig = loadGithubConfig();
+    let cloudLoaded = false;
+    let cloudSha = null;
+    let pendingUploadTimer = null;
 
     const $ = (id) => document.getElementById(id);
     const sidebar = $('sidebar');
@@ -734,9 +832,11 @@
     init();
 
     function init(){
+      loadGithubConfigToForm();
       renderAll();
       bindEvents();
       applyAdminState();
+      renderCloudStatus();
       $('firstTokenNotice').style.display = hasToken() ? 'none' : 'block';
     }
 
@@ -762,6 +862,10 @@
       $('importBtn').addEventListener('click', importResponses);
       $('changeTokenBtn').addEventListener('click', changeToken);
       $('forgetTrustBtn').addEventListener('click', forgetTrustedDevice);
+      $('saveGhConfigBtn').addEventListener('click', saveGithubConfigFromForm);
+      $('loadCloudBtn').addEventListener('click', loadCloudResponses);
+      $('uploadCloudBtn').addEventListener('click', () => uploadCloudResponses(false));
+      $('forgetGhTokenBtn').addEventListener('click', forgetGithubToken);
     }
 
     function openMenu(){
@@ -797,6 +901,7 @@
 
     function saveToStorage(){
       localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+      scheduleAutoCloudUpload();
     }
 
     function normalizeShortcut(value){
@@ -931,6 +1036,265 @@
         window.open(wa, '_blank');
         toast('Tu navegador no soporta menú compartir; abrí WhatsApp y copié el mensaje.');
       }
+    }
+
+    function loadGithubConfig(){
+      try{
+        return {...defaultGithubConfig, ...(JSON.parse(localStorage.getItem(GITHUB_CONFIG_KEY) || '{}'))};
+      }catch{
+        return {...defaultGithubConfig};
+      }
+    }
+
+    function cleanGithubConfig(raw){
+      return {
+        owner: String(raw.owner || defaultGithubConfig.owner).trim() || defaultGithubConfig.owner,
+        repo: String(raw.repo || defaultGithubConfig.repo).trim() || defaultGithubConfig.repo,
+        branch: String(raw.branch || defaultGithubConfig.branch).trim() || defaultGithubConfig.branch,
+        path: String(raw.path || defaultGithubConfig.path).trim().replace(/^\/+/, '') || defaultGithubConfig.path,
+        autoSync: !!raw.autoSync
+      };
+    }
+
+    function loadGithubConfigToForm(){
+      githubConfig = cleanGithubConfig(githubConfig);
+      $('ghOwnerInput').value = githubConfig.owner;
+      $('ghRepoInput').value = githubConfig.repo;
+      $('ghBranchInput').value = githubConfig.branch;
+      $('ghPathInput').value = githubConfig.path;
+      $('ghAutoSync').checked = !!githubConfig.autoSync;
+      const savedToken = localStorage.getItem(GITHUB_TOKEN_KEY);
+      if(savedToken){
+        $('ghTokenInput').placeholder = 'Token guardado en este dispositivo';
+        $('ghTokenHint').textContent = 'Hay un GitHub token guardado solamente en este navegador/dispositivo.';
+        $('ghTrustToken').checked = true;
+      }
+    }
+
+    function readGithubConfigFromForm(){
+      return cleanGithubConfig({
+        owner: $('ghOwnerInput').value,
+        repo: $('ghRepoInput').value,
+        branch: $('ghBranchInput').value,
+        path: $('ghPathInput').value,
+        autoSync: $('ghAutoSync').checked
+      });
+    }
+
+    function saveGithubConfigFromForm(){
+      githubConfig = readGithubConfigFromForm();
+      localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(githubConfig));
+      saveGithubTokenFromForm();
+      renderCloudStatus('Configuración guardada. Ahora puedes cargar nube o subir cambios.');
+      toast('Configuración GitHub guardada ✅');
+    }
+
+    function getGithubToken(){
+      return $('ghTokenInput').value.trim()
+        || sessionStorage.getItem(GITHUB_SESSION_TOKEN_KEY)
+        || localStorage.getItem(GITHUB_TOKEN_KEY)
+        || '';
+    }
+
+    function saveGithubTokenFromForm(){
+      const token = $('ghTokenInput').value.trim();
+      if(!token) return;
+      if($('ghTrustToken').checked){
+        localStorage.setItem(GITHUB_TOKEN_KEY, token);
+        sessionStorage.removeItem(GITHUB_SESSION_TOKEN_KEY);
+        $('ghTokenInput').value = '';
+        $('ghTokenInput').placeholder = 'Token guardado en este dispositivo';
+        $('ghTokenHint').textContent = 'Hay un GitHub token guardado solamente en este navegador/dispositivo.';
+      }else{
+        sessionStorage.setItem(GITHUB_SESSION_TOKEN_KEY, token);
+        $('ghTokenInput').value = '';
+        $('ghTokenInput').placeholder = 'Token guardado solo durante esta pestaña';
+        $('ghTokenHint').textContent = 'El GitHub token se usará solo mientras esta pestaña esté abierta.';
+      }
+    }
+
+    function githubApiUrl(config = githubConfig){
+      return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${config.path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(config.branch)}`;
+    }
+
+    function githubContentUrl(config = githubConfig){
+      return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${config.path.split('/').map(encodeURIComponent).join('/')}`;
+    }
+
+    function githubHeaders(token){
+      return {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      };
+    }
+
+    function encodeBase64Utf8(text){
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      return btoa(binary);
+    }
+
+    function decodeBase64Utf8(base64){
+      const binary = atob(String(base64 || '').replace(/\s/g, ''));
+      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    function buildCloudPayload(){
+      return {
+        app: 'Respuestas Rápidas',
+        version: 2,
+        updatedAt: new Date().toISOString(),
+        owner: githubConfig.owner,
+        repo: githubConfig.repo,
+        path: githubConfig.path,
+        responses
+      };
+    }
+
+    function cleanImportedResponses(imported){
+      return imported.map(r => ({
+        id: r.id || crypto.randomUUID(),
+        title: String(r.title || 'Sin título').trim(),
+        shortcut: normalizeShortcut(r.shortcut || r.title || crypto.randomUUID().slice(0,6)),
+        category: String(r.category || 'General').trim(),
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        message: String(r.message || '').trim()
+      })).filter(r => r.shortcut && r.message);
+    }
+
+    async function fetchCloudFile(allowMissing = false){
+      githubConfig = readGithubConfigFromForm();
+      localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(githubConfig));
+      saveGithubTokenFromForm();
+      const token = getGithubToken();
+      if(!token) throw new Error('Pega tu GitHub token primero');
+
+      const res = await fetch(githubApiUrl(githubConfig), {headers: githubHeaders(token)});
+      if(res.status === 404 && allowMissing) return null;
+      const data = await res.json().catch(() => ({}));
+      if(!res.ok){
+        const msg = data.message || `Error GitHub ${res.status}`;
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    async function loadCloudResponses(){
+      try{
+        setCloudWorking('Cargando respuestas desde GitHub...');
+        const file = await fetchCloudFile(false);
+        cloudSha = file.sha || null;
+        const jsonText = decodeBase64Utf8(file.content || '');
+        const data = JSON.parse(jsonText);
+        const imported = Array.isArray(data) ? data : data.responses;
+        if(!Array.isArray(imported)) throw new Error('El JSON de nube no tiene una lista válida de respuestas');
+
+        responses = cleanImportedResponses(imported);
+        saveToStorageNoAuto();
+        cloudLoaded = true;
+        selectedResponse = null;
+        selectedTitle.textContent = 'Respuesta seleccionada';
+        selectedHint.textContent = 'Selecciona una respuesta para copiarla o compartirla por WhatsApp, Messenger u otra app instalada.';
+        selectedMessage.textContent = 'Aquí aparecerá el mensaje completo.';
+        renderAll();
+        renderCloudStatus(`Nube cargada correctamente. Archivo SHA: ${(cloudSha || '').slice(0,7) || 'nuevo'}.`);
+        toast('Respuestas cargadas desde GitHub ✅');
+      }catch(err){
+        cloudLoaded = false;
+        renderCloudStatus(`No se pudo cargar nube: ${err.message}`, 'bad');
+        toast(`Error: ${err.message}`);
+      }
+    }
+
+    function saveToStorageNoAuto(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+    }
+
+    async function uploadCloudResponses(isAuto = false){
+      try{
+        githubConfig = readGithubConfigFromForm();
+        localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(githubConfig));
+        saveGithubTokenFromForm();
+        const token = getGithubToken();
+        if(!token) throw new Error('Pega tu GitHub token primero');
+        if(!cloudLoaded && isAuto) return;
+        if(!cloudLoaded && !confirm('Todavía no has cargado nube en esta pestaña. Para evitar pisar datos de otro dispositivo, lo ideal es Cargar nube primero. ¿Deseas subir de todos modos?')) return;
+
+        setCloudWorking(isAuto ? 'Auto-subiendo cambios a GitHub...' : 'Subiendo cambios a GitHub...');
+        let latest = null;
+        try{ latest = await fetchCloudFile(true); }catch(err){ throw err; }
+        cloudSha = latest?.sha || cloudSha || null;
+
+        const body = {
+          message: `Actualizar respuestas rápidas ${new Date().toLocaleString('es-HN')}`,
+          content: encodeBase64Utf8(JSON.stringify(buildCloudPayload(), null, 2)),
+          branch: githubConfig.branch
+        };
+        if(cloudSha) body.sha = cloudSha;
+
+        const res = await fetch(githubContentUrl(githubConfig), {
+          method: 'PUT',
+          headers: {...githubHeaders(token), 'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(() => ({}));
+        if(!res.ok){
+          const msg = data.message || `Error GitHub ${res.status}`;
+          throw new Error(msg);
+        }
+        cloudSha = data.content?.sha || cloudSha;
+        cloudLoaded = true;
+        renderCloudStatus(isAuto ? 'Cambios auto-subidos a GitHub ✅' : 'Cambios subidos a GitHub correctamente ✅', 'ok');
+        if(!isAuto) toast('Cambios subidos a GitHub ✅');
+      }catch(err){
+        renderCloudStatus(`No se pudo subir: ${err.message}`, 'bad');
+        if(!isAuto) toast(`Error: ${err.message}`);
+      }
+    }
+
+    function scheduleAutoCloudUpload(){
+      githubConfig = readGithubConfigFromForm();
+      if(!githubConfig.autoSync || !cloudLoaded) return;
+      clearTimeout(pendingUploadTimer);
+      pendingUploadTimer = setTimeout(() => uploadCloudResponses(true), 900);
+    }
+
+    function forgetGithubToken(){
+      localStorage.removeItem(GITHUB_TOKEN_KEY);
+      sessionStorage.removeItem(GITHUB_SESSION_TOKEN_KEY);
+      $('ghTokenInput').value = '';
+      $('ghTrustToken').checked = false;
+      $('ghTokenInput').placeholder = 'Pega tu token fine-grained con permiso Contents Read/Write';
+      $('ghTokenHint').textContent = 'El token no se escribe dentro del HTML. Solo queda en esta sesión o en este dispositivo si marcas confianza.';
+      renderCloudStatus('Token GitHub borrado de este dispositivo.', 'warn');
+      toast('Token GitHub borrado');
+    }
+
+    function setCloudWorking(text){
+      $('cloudDot').className = 'status-dot warn';
+      $('cloudStatusTitle').textContent = 'Procesando...';
+      $('cloudStatusText').textContent = text;
+      $('cloudLastAction').textContent = text;
+      $('cloudTargetText').textContent = `${githubConfig.owner}/${githubConfig.repo} · ${githubConfig.path}`;
+    }
+
+    function renderCloudStatus(lastAction = null, state = null){
+      const cfg = readGithubConfigFromForm ? readGithubConfigFromForm() : githubConfig;
+      githubConfig = cfg;
+      const dot = $('cloudDot');
+      if(!dot) return;
+      const hasTokenNow = !!(localStorage.getItem(GITHUB_TOKEN_KEY) || sessionStorage.getItem(GITHUB_SESSION_TOKEN_KEY) || $('ghTokenInput').value.trim());
+      let cls = state === 'bad' ? 'bad' : (cloudLoaded ? 'ok' : 'warn');
+      dot.className = `status-dot ${cls}`;
+      $('cloudStatusTitle').textContent = cloudLoaded ? 'Nube cargada' : 'Nube no cargada';
+      $('cloudStatusText').textContent = hasTokenNow
+        ? 'Token disponible en este dispositivo o pestaña.'
+        : 'Falta pegar GitHub token para cargar o subir cambios.';
+      $('cloudTargetText').textContent = `${cfg.owner}/${cfg.repo} · ${cfg.path}`;
+      if(lastAction) $('cloudLastAction').textContent = lastAction;
     }
 
     function hasToken(){
@@ -1118,14 +1482,7 @@
           const imported = Array.isArray(data) ? data : data.responses;
           if(!Array.isArray(imported)) throw new Error('Formato inválido');
 
-          const clean = imported.map(r => ({
-            id: r.id || crypto.randomUUID(),
-            title: String(r.title || 'Sin título').trim(),
-            shortcut: normalizeShortcut(r.shortcut || r.title || crypto.randomUUID().slice(0,6)),
-            category: String(r.category || 'General').trim(),
-            tags: Array.isArray(r.tags) ? r.tags : [],
-            message: String(r.message || '').trim()
-          })).filter(r => r.shortcut && r.message);
+          const clean = cleanImportedResponses(imported);
 
           const mode = confirm('Presiona Aceptar para combinar con las actuales. Presiona Cancelar para reemplazar todo.');
           responses = mode ? mergeResponses(responses, clean) : clean;
