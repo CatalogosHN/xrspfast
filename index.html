@@ -1021,7 +1021,7 @@
           <div class="shortcut">/${escapeHtml(normalizeShortcut(r.shortcut))}</div>
           <div class="preview">${escapeHtml(r.message || '')}</div>
           <div class="card-actions">
-            <button class="btn primary small" data-action="select">✅ Seleccionar</button>
+            <button class="btn primary small" data-action="select">📲 Enviar</button>
             <button class="btn ghost small" data-action="copy">📋 Copiar</button>
             <button class="btn ghost small" data-action="tags">🏷️ Ver etiquetas</button>
             <button class="btn ghost small" data-action="edit">✏️ Editar</button>
@@ -1029,7 +1029,7 @@
           </div>
           <div class="tags-panel" data-tags-panel>${renderTagsHtml(r)}</div>
         `;
-        card.querySelector('[data-action="select"]').addEventListener('click', () => selectResponse(r));
+        card.querySelector('[data-action="select"]').addEventListener('click', () => shareResponseDirect(r));
         card.querySelector('[data-action="copy"]').addEventListener('click', () => copyText(r.message || ''));
         card.querySelector('[data-action="tags"]').addEventListener('click', () => toggleCardTags(card, r));
         card.querySelector('[data-action="edit"]').addEventListener('click', () => editResponseFromCard(r));
@@ -1099,12 +1099,21 @@
 
     async function shareSelected(){
       if(!selectedResponse) return toast('Selecciona una respuesta primero');
-      const text = selectedResponse.message || '';
+      await shareText(selectedResponse.message || '', selectedResponse.title || 'Respuesta rápida');
+    }
+
+    async function shareResponseDirect(r){
+      selectResponse(r, false);
+      await shareText(r.message || '', r.title || 'Respuesta rápida');
+    }
+
+    async function shareText(text, title = 'Respuesta rápida'){
+      if(!text.trim()) return toast('Esta respuesta no tiene texto para compartir');
       try{ await navigator.clipboard.writeText(text); }catch{}
 
       if(navigator.share){
         try{
-          await navigator.share({ text });
+          await navigator.share({ title, text });
           toast('Listo para compartir ✅');
         }catch(err){
           if(err && err.name !== 'AbortError') toast('No se pudo abrir compartir. El mensaje ya fue copiado.');
