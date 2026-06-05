@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Respuestas Rápidas</title>
+  <title>Respuestas Rápidas · GitHub</title>
   <style>
     :root{
       --bg:#f4f8ff;
@@ -339,6 +339,33 @@
     }
 
     .selected-actions{display:grid; gap:10px; margin-top:14px}
+    .selected-admin-actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
+    .selected-admin-actions .btn:disabled, .selected-actions .btn:disabled{opacity:.48; cursor:not-allowed; transform:none}
+
+    .tags-panel{
+      display:none;
+      margin-top:10px;
+      padding:11px;
+      border-radius:15px;
+      background:#f8fbff;
+      border:1px dashed #bad7ff;
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.35;
+    }
+    .tags-panel.show{display:block}
+    .tags-list{display:flex; flex-wrap:wrap; gap:7px; margin-top:8px}
+    .tag-pill{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 9px;
+      border-radius:999px;
+      background:#eef6ff;
+      color:var(--primary-dark);
+      border:1px solid #d8eaff;
+      font-weight:850;
+      font-size:.78rem;
+    }
 
     .quick-tip{
       margin-top:14px;
@@ -534,6 +561,7 @@
       .admin-row .actions{justify-content:flex-start}
       .btn{width:100%}
       .card-actions .btn{width:auto; flex:1 1 150px}
+      .selected-admin-actions{grid-template-columns:1fr}
       .side-note{position:static; margin-top:20px}
     }
   </style>
@@ -595,9 +623,15 @@
             <h2 id="selectedTitle">Respuesta seleccionada</h2>
             <p class="hint" id="selectedHint">Selecciona una respuesta para copiarla o compartirla por WhatsApp, Messenger u otra app instalada.</p>
             <div class="message-preview" id="selectedMessage">Aquí aparecerá el mensaje completo.</div>
+            <div class="tags-panel" id="selectedTagsPanel"></div>
             <div class="selected-actions">
+              <button class="btn ghost" id="selectedTagsBtn" disabled>🏷️ Ver etiquetas</button>
               <button class="btn primary" id="copyBtn">📋 Copiar mensaje</button>
               <button class="btn green" id="shareBtn">📲 Enviar / compartir</button>
+            </div>
+            <div class="selected-admin-actions">
+              <button class="btn ghost" id="editSelectedBtn" disabled>✏️ Editar</button>
+              <button class="btn red" id="deleteSelectedBtn" disabled>🗑️ Eliminar</button>
             </div>
             <div class="quick-tip">
               Consejo: en celulares Android, el botón compartir abre el menú de apps instaladas cuando el navegador lo permite.
@@ -654,6 +688,7 @@
               </div>
               <div class="card-actions">
                 <button class="btn primary" type="submit">💾 Guardar respuesta</button>
+                <button class="btn red" type="button" id="deleteEditingBtn" style="display:none">🗑️ Eliminar esta respuesta</button>
                 <button class="btn ghost" type="button" id="clearFormBtn">🧹 Limpiar</button>
                 <button class="btn amber" type="button" id="lockBtn">🔒 Bloquear admin</button>
               </div>
@@ -664,7 +699,7 @@
             <div class="section-head">
               <div>
                 <h2>Respuestas guardadas</h2>
-                <p>Edita o elimina las respuestas existentes.</p>
+                <p>Edita o elimina las respuestas existentes. Puedes cambiar título, atajo, categoría, etiquetas y mensaje completo.</p>
               </div>
             </div>
             <div class="admin-list" id="adminList"></div>
@@ -687,7 +722,7 @@
                   </div>
                   <div class="field">
                     <label for="ghRepoInput">Repositorio</label>
-                    <input id="ghRepoInput" placeholder="xrspfast" />
+                    <input id="ghRepoInput" placeholder="SeguimientoTrackings" />
                   </div>
                   <div class="field">
                     <label for="ghBranchInput">Branch</label>
@@ -723,7 +758,7 @@
 
               <div class="sync-status">
                 <div class="status-line"><span class="status-dot warn" id="cloudDot"></span><div><strong id="cloudStatusTitle">Nube no cargada</strong><br><span id="cloudStatusText">Configura el repo y presiona Cargar nube antes de editar en varios dispositivos.</span></div></div>
-                <div><strong>Destino:</strong><br><span class="mono" id="cloudTargetText">CatalogosHN/xrspfast · data/respuestas_rapidas.json</span></div>
+                <div><strong>Destino:</strong><br><span class="mono" id="cloudTargetText">CatalogosHN/SeguimientoTrackings · data/respuestas_rapidas.json</span></div>
                 <div><strong>Última acción:</strong><br><span id="cloudLastAction">Sin actividad todavía.</span></div>
               </div>
             </div>
@@ -775,7 +810,7 @@
 
     const defaultGithubConfig = {
       owner: 'CatalogosHN',
-      repo: 'xrspfast',
+      repo: 'SeguimientoTrackings',
       branch: 'main',
       path: 'data/respuestas_rapidas.json',
       autoSync: false
@@ -827,6 +862,8 @@
     const selectedTitle = $('selectedTitle');
     const selectedHint = $('selectedHint');
     const selectedMessage = $('selectedMessage');
+    const selectedTagsPanel = $('selectedTagsPanel');
+    const selectedTagsBtn = $('selectedTagsBtn');
     const categoryFilters = $('categoryFilters');
 
     init();
@@ -854,8 +891,12 @@
       searchInput.addEventListener('input', renderResponses);
       $('copyBtn').addEventListener('click', copySelected);
       $('shareBtn').addEventListener('click', shareSelected);
+      $('selectedTagsBtn').addEventListener('click', toggleSelectedTags);
+      $('editSelectedBtn').addEventListener('click', editSelectedResponse);
+      $('deleteSelectedBtn').addEventListener('click', deleteSelectedResponse);
       $('unlockBtn').addEventListener('click', handleUnlock);
       $('responseForm').addEventListener('submit', saveResponse);
+      $('deleteEditingBtn').addEventListener('click', deleteEditingResponse);
       $('clearFormBtn').addEventListener('click', clearForm);
       $('lockBtn').addEventListener('click', lockAdmin);
       $('exportBtn').addEventListener('click', exportResponses);
@@ -982,21 +1023,58 @@
           <div class="card-actions">
             <button class="btn primary small" data-action="select">✅ Seleccionar</button>
             <button class="btn ghost small" data-action="copy">📋 Copiar</button>
+            <button class="btn ghost small" data-action="tags">🏷️ Ver etiquetas</button>
+            <button class="btn ghost small" data-action="edit">✏️ Editar</button>
+            <button class="btn red small" data-action="delete">🗑️</button>
           </div>
+          <div class="tags-panel" data-tags-panel>${renderTagsHtml(r)}</div>
         `;
         card.querySelector('[data-action="select"]').addEventListener('click', () => selectResponse(r));
         card.querySelector('[data-action="copy"]').addEventListener('click', () => copyText(r.message || ''));
+        card.querySelector('[data-action="tags"]').addEventListener('click', () => toggleCardTags(card, r));
+        card.querySelector('[data-action="edit"]').addEventListener('click', () => editResponseFromCard(r));
+        card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteResponseFromCard(r));
         card.addEventListener('dblclick', () => selectResponse(r));
         responsesGrid.appendChild(card);
       });
     }
 
-    function selectResponse(r){
+    function selectResponse(r, notify = true){
       selectedResponse = r;
       selectedTitle.textContent = r.title || 'Respuesta seleccionada';
-      selectedHint.innerHTML = `Atajo: <strong>/${escapeHtml(normalizeShortcut(r.shortcut))}</strong>`;
+      selectedHint.innerHTML = `Atajo: <strong>/${escapeHtml(normalizeShortcut(r.shortcut))}</strong> · Categoría: <strong>${escapeHtml(r.category || 'General')}</strong>`;
       selectedMessage.textContent = r.message || '';
-      toast('Respuesta seleccionada');
+      selectedTagsPanel.innerHTML = renderTagsHtml(r);
+      selectedTagsPanel.classList.remove('show');
+      selectedTagsBtn.textContent = '🏷️ Ver etiquetas';
+      selectedTagsBtn.disabled = false;
+      $('editSelectedBtn').disabled = false;
+      $('deleteSelectedBtn').disabled = false;
+      if(notify) toast('Respuesta seleccionada');
+    }
+
+    function getTags(r){
+      return Array.isArray(r.tags) ? r.tags.map(t => String(t).trim()).filter(Boolean) : [];
+    }
+
+    function renderTagsHtml(r){
+      const tags = getTags(r);
+      if(!tags.length) return '<strong>Etiquetas:</strong> Esta respuesta no tiene etiquetas guardadas.';
+      return `<strong>Etiquetas:</strong><div class="tags-list">${tags.map(t => `<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}</div>`;
+    }
+
+    function toggleSelectedTags(){
+      if(!selectedResponse) return toast('Selecciona una respuesta primero');
+      selectedTagsPanel.classList.toggle('show');
+      selectedTagsBtn.textContent = selectedTagsPanel.classList.contains('show') ? '🙈 Ocultar etiquetas' : '🏷️ Ver etiquetas';
+    }
+
+    function toggleCardTags(card, r){
+      const panel = card.querySelector('[data-tags-panel]');
+      const btn = card.querySelector('[data-action="tags"]');
+      panel.innerHTML = renderTagsHtml(r);
+      panel.classList.toggle('show');
+      btn.textContent = panel.classList.contains('show') ? '🙈 Ocultar etiquetas' : '🏷️ Ver etiquetas';
     }
 
     async function copySelected(){
@@ -1160,7 +1238,7 @@
         title: String(r.title || 'Sin título').trim(),
         shortcut: normalizeShortcut(r.shortcut || r.title || crypto.randomUUID().slice(0,6)),
         category: String(r.category || 'General').trim(),
-        tags: Array.isArray(r.tags) ? r.tags : [],
+        tags: Array.isArray(r.tags) ? r.tags.map(t => String(t).trim()).filter(Boolean) : String(r.tags || '').split(',').map(t => t.trim()).filter(Boolean),
         message: String(r.message || '').trim()
       })).filter(r => r.shortcut && r.message);
     }
@@ -1195,10 +1273,7 @@
         responses = cleanImportedResponses(imported);
         saveToStorageNoAuto();
         cloudLoaded = true;
-        selectedResponse = null;
-        selectedTitle.textContent = 'Respuesta seleccionada';
-        selectedHint.textContent = 'Selecciona una respuesta para copiarla o compartirla por WhatsApp, Messenger u otra app instalada.';
-        selectedMessage.textContent = 'Aquí aparecerá el mensaje completo.';
+        resetSelectedResponse();
         renderAll();
         renderCloudStatus(`Nube cargada correctamente. Archivo SHA: ${(cloudSha || '').slice(0,7) || 'nuevo'}.`);
         toast('Respuestas cargadas desde GitHub ✅');
@@ -1379,9 +1454,12 @@
       else responses.unshift(item);
 
       saveToStorage();
+      if(selectedResponse && selectedResponse.id === id){
+        selectResponse(item, false);
+      }
       clearForm();
       renderAll();
-      toast('Respuesta guardada ✅');
+      toast(index >= 0 ? 'Respuesta actualizada ✅' : 'Respuesta guardada ✅');
     }
 
     function renderAdminList(){
@@ -1413,6 +1491,56 @@
       });
     }
 
+    function ensureAdminForAction(actionText){
+      if(isAdminUnlocked) return true;
+      switchView('adminView');
+      toast(`Desbloquea con token para ${actionText}`);
+      return false;
+    }
+
+    function editSelectedResponse(){
+      if(!selectedResponse) return toast('Selecciona una respuesta primero');
+      if(!ensureAdminForAction('editar esta respuesta')) return;
+      switchView('adminView');
+      editResponse(selectedResponse);
+    }
+
+    function deleteSelectedResponse(){
+      if(!selectedResponse) return toast('Selecciona una respuesta primero');
+      if(!ensureAdminForAction('eliminar esta respuesta')) return;
+      deleteResponse(selectedResponse.id);
+    }
+
+    function editResponseFromCard(r){
+      selectResponse(r);
+      if(!ensureAdminForAction('editar esta respuesta')) return;
+      switchView('adminView');
+      editResponse(r);
+    }
+
+    function deleteResponseFromCard(r){
+      selectResponse(r);
+      if(!ensureAdminForAction('eliminar esta respuesta')) return;
+      deleteResponse(r.id);
+    }
+
+    function resetSelectedResponse(){
+      selectedResponse = null;
+      selectedTitle.textContent = 'Respuesta seleccionada';
+      selectedHint.textContent = 'Selecciona una respuesta para copiarla o compartirla por WhatsApp, Messenger u otra app instalada.';
+      selectedMessage.textContent = 'Aquí aparecerá el mensaje completo.';
+      if(selectedTagsPanel){
+        selectedTagsPanel.innerHTML = '';
+        selectedTagsPanel.classList.remove('show');
+      }
+      if(selectedTagsBtn){
+        selectedTagsBtn.disabled = true;
+        selectedTagsBtn.textContent = '🏷️ Ver etiquetas';
+      }
+      if($('editSelectedBtn')) $('editSelectedBtn').disabled = true;
+      if($('deleteSelectedBtn')) $('deleteSelectedBtn').disabled = true;
+    }
+
     function editResponse(r){
       if(!isAdminUnlocked) return toast('Primero desbloquea con token');
       $('editId').value = r.id;
@@ -1422,24 +1550,35 @@
       $('tagsInput').value = Array.isArray(r.tags) ? r.tags.join(', ') : '';
       $('messageInput').value = r.message || '';
       $('formTitle').textContent = 'Editar respuesta rápida';
+      $('deleteEditingBtn').style.display = 'inline-flex';
+      $('deleteEditingBtn').textContent = `🗑️ Eliminar: ${r.title || 'esta respuesta'}`;
       window.scrollTo({top:0, behavior:'smooth'});
     }
 
     function deleteResponse(id){
       if(!isAdminUnlocked) return toast('Primero desbloquea con token');
       const item = responses.find(r => r.id === id);
-      const ok = confirm(`¿Borrar la respuesta "${item?.title || 'sin título'}"?`);
+      if(!item) return toast('No encontré esa respuesta');
+      const ok = confirm(`¿Borrar la respuesta "${item.title || 'sin título'}"?
+
+Esta acción se guarda localmente y luego puedes subir cambios a GitHub.`);
       if(!ok) return;
       responses = responses.filter(r => r.id !== id);
       saveToStorage();
       if(selectedResponse && selectedResponse.id === id){
-        selectedResponse = null;
-        selectedTitle.textContent = 'Respuesta seleccionada';
-        selectedHint.textContent = 'Selecciona una respuesta para copiarla o compartirla por WhatsApp, Messenger u otra app instalada.';
-        selectedMessage.textContent = 'Aquí aparecerá el mensaje completo.';
+        resetSelectedResponse();
+      }
+      if($('editId').value === id){
+        clearForm();
       }
       renderAll();
-      toast('Respuesta borrada');
+      toast('Respuesta eliminada 🗑️');
+    }
+
+    function deleteEditingResponse(){
+      const id = $('editId').value;
+      if(!id) return toast('No estás editando ninguna respuesta');
+      deleteResponse(id);
     }
 
     function clearForm(){
@@ -1450,6 +1589,8 @@
       $('tagsInput').value = '';
       $('messageInput').value = '';
       $('formTitle').textContent = 'Agregar respuesta rápida';
+      $('deleteEditingBtn').style.display = 'none';
+      $('deleteEditingBtn').textContent = '🗑️ Eliminar esta respuesta';
     }
 
     function exportResponses(){
