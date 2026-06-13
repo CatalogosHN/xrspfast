@@ -1,7 +1,7 @@
 {
   "app": "Respuestas Rápidas",
   "version": 4,
-  "updatedAt": "2026-06-13T18:56:24.949Z",
+  "updatedAt": "2026-06-13T18:59:30.883Z",
   "owner": "CatalogosHN",
   "repo": "xrspfast",
   "path": "data/respuestas_rapidas.json",
@@ -10,6 +10,18 @@
     "Publicaciones de Facebook"
   ],
   "responses": [
+    {
+      "id": "34988cfa-cd7e-44ad-8080-c3c42d862429",
+      "title": "Cuentas bancarias para pagossss",
+      "shortcut": "cuentaswe",
+      "section": "Publicaciones de Facebook",
+      "category": "Publicaciones de Facebook",
+      "tags": [
+        "Cuentas bancarias para pagossss"
+      ],
+      "message": "sad",
+      "images": []
+    },
     {
       "id": "acbd9766-9ff1-4af3-98c3-7958078b9a3a",
       "title": "Inflador de Llantas Portatil Recargable",
